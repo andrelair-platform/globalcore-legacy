@@ -1,0 +1,35 @@
+# Runs GlobalCore OUTSIDE the k8s cluster (on the controller / any Docker host).
+# The modern platform in k8s reaches OUT to this — that gap is part of the lesson.
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: globalcore
+      POSTGRES_USER: gcore
+      POSTGRES_PASSWORD: gcore
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d:ro   # 01-schema, 02-seed, 03-procs run at first init
+      - gcdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gcore -d globalcore"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build: .
+    environment:
+      GC_DB_URL: jdbc:postgresql://db:5432/globalcore?currentSchema=gcore
+      GC_DB_USER: gcore
+      GC_DB_PASS: gcore
+      GC_BATCH_CRON: "0 */2 * * * *"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+volumes:
+  gcdata:

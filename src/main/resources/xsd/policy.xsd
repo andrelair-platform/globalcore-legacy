@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- GlobalCore SOAP contract. XML in, XML out. No REST, no JSON — on purpose. -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://globalcorp.com/gcore/policy"
+           targetNamespace="http://globalcorp.com/gcore/policy"
+           elementFormDefault="qualified">
+
+    <xs:element name="GetPolicyRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="polNo" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="GetPolicyResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="rc" type="xs:string"/>            <!-- return code, legacy style: 00=OK 08=not found -->
+                <xs:element name="policy" type="tns:Policy" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="CreatePolicyRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="custNo" type="xs:string"/>
+                <xs:element name="brkCd"  type="xs:string"/>
+                <xs:element name="lobCd"  type="xs:string"/>       <!-- MAR/PRO/AVI -->
+                <xs:element name="currCd" type="xs:string"/>
+                <xs:element name="effDt"  type="xs:date"/>
+                <xs:element name="expDt"  type="xs:date"/>
+                <xs:element name="sumIns" type="xs:decimal"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="CreatePolicyResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="rc"     type="xs:string"/>
+                <xs:element name="polNo"  type="xs:string" minOccurs="0"/>
+                <xs:element name="statCd" type="xs:string" minOccurs="0"/>  <!-- P = pending until nightly batch -->
+                <xs:element name="msg"    type="xs:string" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="Policy">
+        <xs:sequence>
+            <xs:element name="polNo"    type="xs:string"/>
+            <xs:element name="custName" type="xs:string"/>
+            <xs:element name="brkCd"    type="xs:string"/>
+            <xs:element name="lobCd"    type="xs:string"/>
+            <xs:element name="statCd"   type="xs:string"/>
+            <xs:element name="currCd"   type="xs:string"/>
+            <xs:element name="verNo"    type="xs:int"/>
+            <xs:element name="effDt"    type="xs:date"/>
+            <xs:element name="expDt"    type="xs:date"/>
+            <xs:element name="sumIns"   type="xs:decimal"/>
+            <xs:element name="premAmt"  type="xs:decimal"/>
+            <xs:element name="endorsement" type="tns:Endorsement" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="Endorsement">
+        <xs:sequence>
+            <xs:element name="endNo"   type="xs:int"/>
+            <xs:element name="endDt"   type="xs:date"/>
+            <xs:element name="endTyp"  type="xs:string"/>
+            <xs:element name="premAdj" type="xs:decimal"/>
+            <xs:element name="endDesc" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>
