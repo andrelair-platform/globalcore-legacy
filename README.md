@@ -6,6 +6,11 @@
 >
 > **The iron rule: GlobalCore is FROZEN.** You do **not** add modern capabilities inside it — you wrap
 > it (Anti-Corruption Layer → strangler-fig). Plan: `ktayl-integration/docs/legacy-wrapper-initiative-spec.md`.
+>
+> **Direction (2026-09-20):** GlobalCore evolves to **real Oracle (Free) + PL/SQL** (v0 uses Postgres-as-Oracle)
+> and its **wrapped/delivered domain is Claims**, not Policy — Policy is already modern (the live
+> `ktayl-policy-service`). Wrapping GlobalCore's **Claims** domain is how the modern **ktayl-claims #11** is
+> delivered. Spine: EA Blueprint §2b + `insurance-platform/legacy-core-modernization`.
 
 ## What's deliberately "legacy" here (and why)
 | Trait | How it shows up | Why it matters |
