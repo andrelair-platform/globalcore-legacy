@@ -57,6 +57,27 @@ curl -s http://localhost:8080/ws -H 'Content-Type: text/xml' -d '
 It returns `statCd = P`. Wait for the batch (every 2 min; watch the app logs) — the new policy and
 the expiring seed policy `POL0000002` get processed (activated / renewed).
 
+## Claims on real Oracle + PL/SQL (S001/S002 — the 2026-09-20 direction)
+
+The Claims domain evolves GlobalCore to **real Oracle Free + PL/SQL** (v0's Postgres/Policy stays for
+reference). This is the frozen legacy that the modern **ktayl-claims #11** ACL wraps over SOAP.
+
+```bash
+# ARM64-native on Apple Silicon; auto-applies db/oracle/{01-schema,02-seed,03-plsql}.sql as GCORE
+ORACLE_SYS_PASSWORD=devsys GCORE_PASSWORD=gcore docker compose -f docker-compose.oracle.yml up -d
+docker exec -it gc-oracle sqlplus gcore/gcore@//localhost:1521/FREEPDB1
+```
+
+- **S001 — schema + seed** (`db/oracle/01-schema.sql`, `02-seed.sql`): cryptic `GC_CUST / GC_POLICY /
+  GC_POLPRL / GC_CLAIM / GC_CLMRSV / GC_PAYMT / GC_CLMAUD` + `GC_CLMSEQ`; a small Property policy book.
+- **S002 — business logic in PL/SQL** (`db/oracle/03-plsql.sql`): `PKG_CLAIMS.PROC_CREATE_CLAIM` (allocates
+  `CLM-YYYY-NNNNNN`, initial state `N`) + `FUNC_CALCULATE_RESERVE` (peril-weighted % of sum insured); the
+  **state machine** `TRG_CLAIM_STATE` (an illegal `STATCD` transition raises `ORA-20001` **in the DB**);
+  the **append-only** audit `TRG_CLAIM_AUDIT` + `TRG_CLMAUD_FREEZE` (`ORA-20009`).
+
+Runs **outside k8s** (ADR-002). Prod (controller): creds via **Vault/ESO** (`secret/platform/oracle-legacy`),
+never Git; only the ACL + Debezium reach `:1521` via a default-deny egress netpol.
+
 ## What you build next (NOT in this repo — that's the whole point)
 An **Anti-Corruption Layer** that turns this SOAP into clean JSON, a modern **underwriting workbench**
 that reads a policy *through* the ACL, and document-AI ingestion — see the initiative spec.
