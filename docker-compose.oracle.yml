@@ -1,0 +1,30 @@
+# GlobalCore CLAIMS on real Oracle Free (S001/S002) — runs OUTSIDE k8s (ADR-002), like MinIO.
+# On first boot, db/oracle/{01-schema,02-seed,03-plsql}.sql auto-apply as the least-privilege app
+# user GCORE (gvenzl runs /container-entrypoint-initdb.d/*.sql once). ARM64-native on Apple Silicon.
+#
+#   ORACLE_SYS_PASSWORD=… GCORE_PASSWORD=… docker compose -f docker-compose.oracle.yml up -d
+#   docker exec -it gc-oracle sqlplus gcore/$GCORE_PASSWORD@//localhost:1521/FREEPDB1
+#
+# Prod (controller): SYS + app creds come from Vault/ESO (secret/platform/oracle-legacy), never Git;
+# the in-cluster ACL + Debezium reach :1521 through a default-deny egress netpol.
+services:
+  oracle:
+    image: gvenzl/oracle-free:23-slim-faststart
+    container_name: gc-oracle
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_SYS_PASSWORD:?set a SYS/SYSTEM password (dev)}   # dev only
+      APP_USER: gcore                                                            # least-privilege app user
+      APP_USER_PASSWORD: ${GCORE_PASSWORD:?set the GCORE app-user password}       # never SYS/SYSTEM
+    volumes:
+      - ./db/oracle:/container-entrypoint-initdb.d:ro
+      - gcoradata:/opt/oracle/oradata
+    ports:
+      - "1521:1521"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  gcoradata:
